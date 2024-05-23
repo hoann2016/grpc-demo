@@ -1,7 +1,4 @@
-﻿
-
-using Dumy;
-using Greet;
+﻿using Greet;
 using Grpc.Core;
 
 const string target="127.0.0.1:50051";
