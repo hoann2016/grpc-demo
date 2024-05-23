@@ -4,7 +4,7 @@ using server;
 
 const int port = 50051;
 Server server = null;
-try
+try 
 {
     server = new Server
     {
