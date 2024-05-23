@@ -1,12 +1,14 @@
-﻿using Grpc.Core;
+﻿using Greet;
+using Grpc.Core;
+using server;
 
-const int port =50051;
-Server server=null;
+const int port = 50051;
+Server server = null;
 try
 {
     server = new Server
     {
-       
+        Services = { GreetService.BindService(new GreetingServiceImp()) },
         Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) }
     };
     server.Start();
@@ -20,7 +22,7 @@ catch (Exception e)
 }
 finally
 {
-    
+
     if (server != null)
     {
         server.ShutdownAsync().Wait();
