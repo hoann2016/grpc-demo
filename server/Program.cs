@@ -1,4 +1,6 @@
-﻿using Grpc.Core;
+﻿using Greet;
+using Grpc.Core;
+using server;
 
 const int port =50051;
 Server server=null;
@@ -6,7 +8,7 @@ try
 {
     server = new Server
     {
-       
+       Services ={GreetingService.BindService(new GreetingServiceImpl())},
         Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) }
     };
     server.Start();
