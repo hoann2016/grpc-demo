@@ -1,4 +1,4 @@
-﻿using Greet;
+﻿
 using Grpc.Core;
 using server;
 
@@ -8,7 +8,8 @@ try
 {
     server = new Server
     {
-       Services={GreetService.BindService(new GreetingServiceImp())},
+       //Services={GreetService.BindService(new GreetingServiceImp())},
+       Services={ FileTransfer.FileTransferService.BindService(new FileTransferService()) },
         Ports = { new ServerPort("localhost", port, ServerCredentials.Insecure) }
     };
     server.Start();

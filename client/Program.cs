@@ -1,7 +1,8 @@
-﻿using Greet;
+﻿using FileTransfer;
+using Google.Protobuf;
 using Grpc.Core;
 
-const string target="127.0.0.1:50051";
+const string target = "127.0.0.1:50051";
 Channel channel = new Channel(target, ChannelCredentials.Insecure);
 await channel.ConnectAsync().ContinueWith((task) =>
 {
@@ -10,47 +11,44 @@ await channel.ConnectAsync().ContinueWith((task) =>
         Console.WriteLine("The client connected successfully");
     }
 });
-var client=new GreetService.GreetServiceClient(channel);
-var stream=client.GreetEveryOne();
-var responseReader=Task.Run(async ()=>
+
+var client = new FileTransferService.FileTransferServiceClient(channel);
+var stream = client.SendFile();
+
+//receive the response
+Task.Run(async () =>
 {
     while (await stream.ResponseStream.MoveNext())
     {
-        Console.WriteLine("Received: " + stream.ResponseStream.Current.Result);
+        var res = stream.ResponseStream.Current;
+        Console.WriteLine("Received: " + res);
     }
 });
-List<GreetEveryOneRequest> requests = new List<GreetEveryOneRequest>()
+
+
+//Upload the file
+var bytes = File.ReadAllBytes("./upload/image.gif");
+var byteString = ByteString.CopyFrom(bytes);
+var fileName = "image.gif";
+var chunkSize = 64 * 1024;
+var bytesLeft = byteString.Length;
+var offset = 0;
+while (bytesLeft > 0)
 {
-    new GreetEveryOneRequest()
+    var thisChunkSize = Math.Min(chunkSize, bytesLeft);
+    var data = byteString.Take(thisChunkSize).Skip(offset).ToArray();
+
+    var chunk = new FileTransferRequest
     {
-        Greeting = new Greeting()
-        {
-            FirstName = "Mark",
-            LastName = "Zuckerberg"
-        }
-    },
-    new GreetEveryOneRequest()
-    {
-        Greeting = new Greeting()
-        {
-            FirstName = "Elon",
-            LastName = "Musk"
-        }
-    },
-    new GreetEveryOneRequest()
-    {
-        Greeting = new Greeting()
-        {
-            FirstName = "Jeff",
-            LastName = "Bezos"
-        }
-    }
-};
-foreach (var request in requests)
-{
-    Console.WriteLine("Sending: " + request.Greeting.FirstName + " " + request.Greeting.LastName);
-    await stream.RequestStream.WriteAsync(request);
-    await Task.Delay(1000);
+        FileName = fileName,
+        Data = ByteString.CopyFrom(data)
+    };
+    await stream.RequestStream.WriteAsync(chunk);
+    offset += thisChunkSize;
+    bytesLeft -= thisChunkSize;
 }
+await stream.RequestStream.CompleteAsync();
+
+
 channel.ShutdownAsync().Wait();
 Console.Read();

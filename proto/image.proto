@@ -1,0 +1,16 @@
+syntax="proto3";
+package file_transfer;
+
+message FileTransferRequest {
+    string file_name =1;
+    bytes data =2;
+}
+
+message FileTransferResponse {
+    string file_name =1;
+    bool success =2;
+}
+
+service FileTransferService {
+    rpc SendFile(stream FileTransferRequest) returns (stream FileTransferResponse);
+}
